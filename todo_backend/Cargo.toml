@@ -1,0 +1,12 @@
+[package]
+name = "todo_backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+diesel = "1.4.1"
+diesel_cli = { version = "2.0.1", default-features = false, features = ["postgres"] }
+dotenvy = "0.15.6"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket_sync_db_pools = { version = "0.1.0-rc.2", features = ["diesel_postgres_pool"] }
+serde = "1.0.152"

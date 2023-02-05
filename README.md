@@ -19,11 +19,12 @@ You can install these dependencies by adding the following lines to your Cargo.t
 
 ```rust
 [dependencies]
-rocket = "0.4.11"
-diesel = { version = "1.4.4", features = ["sqlite"] }
-diesel_sqlite_connection = "0.5.0"
-serde = "1.0"
-serde_json = "1.0"
+diesel = "1.4.1"
+diesel_cli = { version = "2.0.1", default-features = false, features = ["postgres"] }
+dotenvy = "0.15.6"
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rocket_sync_db_pools = { version = "0.1.0-rc.2", features = ["diesel_postgres_pool"] }
+serde = "1.0.152"
 ```
 
 ## Getting Started
