@@ -1,0 +1,36 @@
+{% extends "base" %} {% block content %}
+<h1>Todo List</h1>
+<table>
+    <colgroup>
+        <col class="medium">
+        <col class="wide">
+        <col class="medium">
+    </colgroup>
+    <tr>
+        <th>ID</th>
+        <th>Creator</th>
+        <th>Body</th>
+    </tr>
+    {% for todo in todos %}
+    <tr>
+        <td>{{ todo.id }}</td>
+        <td class="title">{{ todo.title }}</td>
+        <td >
+            <div class="body">
+                <button>Edit</button>
+                <form action="/deletetodo/{{ todo.id }}" method="post">
+                    <input type="hidden" name="_method" value="delete" />
+                    <button type="submit">Delete</button>bmit">Delete</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<form action="/addtask" method="post">
+    <div class="add_todo_form">
+        <input type="text" name="item" placeholder="Enter a new todo here..." />
+        <button type="submit">Add Todo</button>
+    </div>
+</form>
+{% endblock content %}

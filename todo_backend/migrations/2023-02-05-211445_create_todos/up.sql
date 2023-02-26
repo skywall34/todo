@@ -1,8 +1,0 @@
--- Your SQL goes here
-CREATE TABLE todo (
-  id SERIAL PRIMARY KEY,
-  creator VARCHAR NOT NULL,
-  title VARCHAR NOT NULL,
-  body TEXT NOT NULL,
-  completed BOOLEAN NOT NULL DEFAULT FALSE
-)

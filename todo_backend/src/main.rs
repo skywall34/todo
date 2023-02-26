@@ -1,109 +1,83 @@
+#[macro_use] extern crate rocket;
 
-#[macro_use]
-extern crate rocket;
-#[macro_use]
-extern crate diesel;
+mod pool;
 
 
-use diesel::{prelude::*, table, Insertable, Queryable};
-use rocket::{serde::json::Json};
-use rocket::response::{Debug, status::Created};
-use rocket_sync_db_pools::database;
-use serde::{Deserialize, Serialize};
+use migration::MigratorTrait;
+use pool::Db;
+use rocket::{fairing::{AdHoc, self}, Rocket, Build, form::Form, serde::json::Json, http::Status, response::{Responder, self}, Request};
+use sea_orm::{ActiveModelTrait, Set, EntityTrait, QueryOrder, DeleteResult};
+use sea_orm_rocket::{Database, Connection};
+
+use entity::tasks;
+use entity::tasks::Entity as Tasks;
 
 
-table! {
-    todo (id) {
-        id -> Int4,
-        creator -> Varchar,
-        title -> Varchar,
-        body -> Text,
-        completed -> Bool,
-    } 
+struct DatabaseError(sea_orm::DbErr);
+
+impl<'r> Responder<'r, 'r> for DatabaseError {
+    fn respond_to(self, _request: &Request) -> response::Result<'r> {
+        Err(Status::InternalServerError)
+    }
 }
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Insertable)]
-#[table_name = "todo"]
-struct Todo {
-    id: i32,
-    creator: String,
-    title: String,
-    body: String,
-    completed: bool
+impl From<sea_orm::DbErr> for DatabaseError {
+    fn from(error: sea_orm::DbErr) -> Self {
+        DatabaseError(error)
+    }
 }
 
-#[derive(Clone, Serialize, Deserialize, Insertable)]
-#[table_name = "todo"]
-struct NewTodo{
-    creator:  String,
-    title: String,
-    body: String
+#[post("/addtask", data="<task_form>")]
+async fn add_task(conn: Connection<'_, Db>, task_form: Form<tasks::Model>) -> Result<Json<tasks::Model>, DatabaseError> {
+    let db = conn.into_inner();
+    let task = task_form.into_inner();
+
+    let active_task: tasks::ActiveModel = tasks::ActiveModel {
+        creator: Set(task.creator),
+        title: Set(task.title),
+        body: Set(task.body),
+        completed: Set(task.completed),
+        ..Default::default()
+    };
+
+    Ok(Json(active_task.insert(db).await?))
 }
 
-type Result<T, E = Debug<diesel::result::Error>> = std::result::Result<T, E>;
+#[get("/readtasks")]
+async fn read_tasks(conn: Connection<'_, Db>) -> Result<Json<Vec<tasks::Model>>, DatabaseError> {
+    let db = conn.into_inner();
 
+    Ok(Json(
+        Tasks::find()
+            .order_by_asc(tasks::Column::Id)
+            .all(db)
+            .await?
+    ))
+}
 
-// fn establish_connection() -> PgConnection {
-//     dotenv().ok();
+#[put("/edittitle", data="<task_form>")]
+async fn edit_task(conn: Connection<'_, Db>, task_form: Form<tasks::Model>) -> Result<Json<tasks::Model>, DatabaseError> {
+    let db = conn.into_inner();
+    let task = task_form.into_inner();
 
-//     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-//     PgConnection::establish(&database_url)
-//         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
-// }
+    let task_to_update = Tasks::find_by_id(task.id).one(db).await?;
+    let mut task_to_update: tasks::ActiveModel = task_to_update.unwrap().into();
+    task_to_update.title = Set(task.title);
 
-#[database("my_db")]
-pub struct Db(diesel::PgConnection);
-
-
-#[post("/", data = "<todo>")]
-async fn create_todo(connection: Db, todo: Json<NewTodo>) -> Result<Created<Json<NewTodo>>> {
-    let todo_value = todo.clone();
-
-    connection.run(move |conn| {
-        diesel::insert_into(todo::table)
-            .values(&*todo_value)
-            .execute(conn)
-    }).await?;
-
-    Ok(Created::new("/").body(todo))
-
+    Ok(Json(
+        task_to_update.update(db).await?
+    ))
 }
 
 
-#[get("/random")]
-fn get_random_todo() -> Json<Todo> {
-    Json(
-        Todo {
-            id: 1,
-            creator: "Mike Shin".to_string(),
-            title: "My first Todo".to_string(),
-            body: "This is my first todo list".to_string(),
-            completed: false,
-        }
-    )
+#[delete("/deletetask/<id>")]
+async fn delete_task(conn: Connection<'_, Db>, id: i32) -> Result<String, DatabaseError> {
+    let db = conn.into_inner();
+    let result = Tasks::delete_by_id(id).exec(db).await?;
+
+    Ok(format!("{} task(s) deleted", result.rows_affected))
 }
 
-#[get("/<id>")]
-fn get_todo(id: i32) -> Json<Todo> {
-    Json(
-        Todo {
-            id,
-            creator: "Mike Shin".to_string(),
-            title: "Some title".to_string(),
-            body: "Some body".to_string(),
-            completed: false,
-        }
-    )
-}
-
-#[get("/")]
-async fn get_all_todos(connection: Db) -> Json<Vec<Todo>> {
-    connection
-        .run(|c| todo::table.load(c))
-        .await
-        .map(Json)
-        .expect("Failed to fetch blog posts")
-}
 
 
 #[get("/")]
@@ -111,18 +85,16 @@ fn index() -> &'static str {
     "Hello, world!"
 }
 
+async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
+    let conn = &Db::fetch(&rocket).unwrap().conn;
+    let _ = migration::Migrator::up(conn, None).await;
+    Ok(rocket)
+}
+
 #[launch]
 fn rocket() -> _ {
-
-    let rocket = rocket::build();
-    rocket
-        .attach(Db::fairing())
-        .mount("/", routes![index])
-        .mount("/todos", routes![
-            get_random_todo, 
-            get_todo, 
-            get_all_todos, 
-            create_todo
-        ]
-    )
+    rocket::build()
+        .attach(Db::init())
+        .attach(AdHoc::try_on_ignite("Migrations", run_migrations))
+        .mount("/", routes![index, add_task, read_tasks, edit_task, delete_task])
 }
