@@ -2,10 +2,6 @@ Welcome to the TODO git repository! This repository contains the source code for
 
 It closely follows the rust-web-app by garrettudstrand here: https://github.com/garrettudstrand/rust-web-app and is mainly used to personally understand Rust with web applications. I would follow this guide [here](https://medium.com/better-programming/how-to-write-a-web-app-in-rust-part-1-3047156660a7) to really understand how to start writing web applications in Rust. 
 
-## Reference
-
-Most of this code 
-
 ## Prerequisites
 Before you begin, make sure that you have the following software installed on your system:
 
