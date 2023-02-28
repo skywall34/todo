@@ -6,7 +6,8 @@
     <meta name="description" content="A todo app created via Rocket and Rust" />
     <meta name="author" content="Mike Shin" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
+    <link rel="stylesheet" href="/todo_list.css" />
+    <link rel="stylesheet" href="/container.css" />
   </head>
   <body>
     <div class="container">

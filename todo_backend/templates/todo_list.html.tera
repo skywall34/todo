@@ -1,5 +1,10 @@
 {% extends "base" %} {% block content %}
 <h1>Todo List</h1>
+{% if flash %}
+<p class="{{ flash.0 }}-flash">
+  {{ flash.1 }}
+</p>
+{% endif %}
 <table>
     <colgroup>
         <col class="medium">
@@ -8,29 +13,45 @@
     </colgroup>
     <tr>
         <th>ID</th>
-        <th>Creator</th>
-        <th>Body</th>
+        <th>Item</th>
+        <th>Actions</th>
     </tr>
-    {% for todo in todos %}
+    {% for task in tasks %}
     <tr>
-        <td>{{ todo.id }}</td>
-        <td class="title">{{ todo.title }}</td>
+        <td>{{ task.id }}</td>
+        <td class="item">{{ task.creator }}</td>
+        <td class="item">{{ task.title }}</td>
+        <td class="item">{{ task.body }}</td>
+        <td class="item">{{ task.completed }}</td>
         <td >
-            <div class="body">
-                <button>Edit</button>
-                <form action="/deletetodo/{{ todo.id }}" method="post">
+            <div class="actions">
+                <form action="/edit/{{ task.id }}" method="get">
+                    <button type="submit">Edit</button>
+                </form>
+                <form action="/deletetask/{{ task.id }}" method="post">
                     <input type="hidden" name="_method" value="delete" />
-                    <button type="submit">Delete</button>bmit">Delete</button>
+                    <button type="submit">Delete</button>
                 </form>
             </div>
         </td>
     </tr>
     {% endfor %}
 </table>
-<form action="/addtask" method="post">
-    <div class="add_todo_form">
-        <input type="text" name="item" placeholder="Enter a new todo here..." />
-        <button type="submit">Add Todo</button>
-    </div>
-</form>
+<div>
+  <form action="/addtask" method="post">
+    <label for="creator">Creator:</label>
+    <input type="text" id="creator" name="creator" required><br>
+
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" required><br>
+
+    <label for="body">Body:</label>
+    <textarea id="body" name="body" required></textarea><br>
+
+    <label for="completed">Completed:</label>
+    <input type="checkbox" id="completed" name="completed"><br>
+
+    <input type="submit" value="Submit">
+  </form>
+</div>
 {% endblock content %}
