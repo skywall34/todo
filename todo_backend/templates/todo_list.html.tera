@@ -37,21 +37,42 @@
     </tr>
     {% endfor %}
 </table>
-<div>
-  <form action="/addtask" method="post">
-    <label for="creator">Creator:</label>
-    <input type="text" id="creator" name="creator" required><br>
+<div class="page-row">
+    {% if current_page == 0 %}
+        {% set start_page = current_page + 1 %}
+    {% else %}
+        {% set start_page = current_page %}
+    {% endif %}
 
-    <label for="title">Title:</label>
-    <input type="text" id="title" name="title" required><br>
+    {% if start_page + 3 > number_of_pages %}
+        {% set end_page = number_of_pages + 1 %}
+    {% else %}
+        {% set end_page = start_page + 3 %}
+    {% endif %}
 
-    <label for="body">Body:</label>
-    <textarea id="body" name="body" required></textarea><br>
+    {% for i in range(start = start_page, end = end_page) %}
+        <a href="/?page={{ i - 1 }}" class="page-selector">{{ i }}<a>
+    {% endfor %}
 
-    <label for="completed">Completed:</label>
-    <input type="checkbox" id="completed" name="completed"><br>
-
-    <input type="submit" value="Submit">
-  </form>
+    {% if end_page <= number_of_pages %}
+        <a>...</a>
+    {% endif %}
 </div>
+  <form action="/addtask" method="post">
+    <div class="add_task_form">
+        <label for="creator">Creator:</label>
+        <input type="text" id="creator" name="creator" required><br>
+
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required><br>
+
+        <label for="body">Body:</label>
+        <textarea id="body" name="body" required></textarea><br>
+
+        <label for="completed">Completed:</label>
+        <input type="checkbox" id="completed" name="completed"><br>
+
+        <input type="submit" value="Submit">
+    </div>
+  </form>
 {% endblock content %}

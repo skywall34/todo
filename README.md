@@ -51,3 +51,8 @@ This will start the Rocket server and serve the TODO web application on http://l
 ## Testing
 
 TODO
+
+## TODO List
+- ID List
+
+If we delete a task, new ones will not take the id of the old one. Instead it's just an increment. For example, if task id 2 is deleted the next task added will have id of 3 intead of 2.
