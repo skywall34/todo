@@ -1,5 +1,7 @@
 use sea_orm_migration::prelude::*;
 
+use crate::m20230305_164028_create_users_table::Users;
+
 pub struct Migration;
 
 impl MigrationName for Migration {
@@ -27,6 +29,16 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Tasks::Title).string().not_null())
                     .col(ColumnDef::new(Tasks::Body).string().not_null())
                     .col(ColumnDef::new(Tasks::Completed).boolean().not_null())
+                    .col(ColumnDef::new(Tasks::UserId).integer().default(Value::Int(None)))
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("user_id")
+                            .from(Tasks::Table, Tasks::UserId)
+                            .to(Users::Table, Users::Id)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade)
+    
+                    )
                     .to_owned()
             )
             .await
@@ -50,5 +62,6 @@ pub enum Tasks {
     Creator,
     Title,
     Body,
-    Completed
+    Completed,
+    UserId
 }
