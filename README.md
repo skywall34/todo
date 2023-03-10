@@ -56,3 +56,25 @@ TODO
 - ID List
 
 If we delete a task, new ones will not take the id of the old one. Instead it's just an increment. For example, if task id 2 is deleted the next task added will have id of 3 intead of 2.
+
+- ENV Vars
+
+The Password Salt should be derived from an env variable
+
+## Known Issues
+
+- sea-orm-cli migrate fresh
+
+Will return the following error: 
+
+```bash
+error: Found argument '-u' which wasn't expected, or isn't valid in this context
+
+USAGE:
+    migration fresh [FLAGS]
+
+For more information try --help
+Fail to run migration
+```
+
+If you run the command and then run ```target/debug/migration fresh``` without the -u field that the cli automatically adds then it should still run the migration. Still in progress of figuring out why that's happening since the **migration fresh** command does not support -u fields.
